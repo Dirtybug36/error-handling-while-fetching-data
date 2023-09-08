@@ -1,0 +1,68 @@
+const App: React.FC = () => {
+  const [movies, setMovies] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+//always use a variable
+  const KEY = "85f0359c";
+  const query = "titanic";
+  useEffect(function () {
+    async function fetchMovies() {
+      try {
+        setLoading(true);
+        const res = await fetch(
+          `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
+        );
+        if (!res.ok) {
+          throw new Error("Something went wrong while fetching");
+        }
+        const data = await res.json();
+        if (data.Response === "False") throw new Error("Movie not found");
+        setMovies(data.Search);
+        // setLoading(false);
+      } catch (err: any) {
+        console.error(err.message);
+        setError(err.message);
+        // setLoading(false) can be put but duplication of code
+      } finally {
+        setLoading(false);
+      } //finally is always executed
+    }
+    fetchMovies();
+  }, []);
+  return (
+    <>
+      <NavBar>
+        <Logo />
+        <Search />
+        <NumResult movies={movies} />
+      </NavBar>
+      <MoviesAndChill>
+        <ListBox>
+          {loading && <Loader />}
+          {!loading && !error && <MovieList movies={movies} />}
+          {error && <ErrorMessage message={error} />}
+          {/* only one these must be true here */}
+        </ListBox>
+        <WatchedBox watched={watched}>
+          <WatchedSummary watched={watched} />
+        </WatchedBox>
+      </MoviesAndChill>
+    </>
+  );
+};
+
+export default App;
+interface ErrorMessageProps {
+  message: string;
+}
+const ErrorMessage: React.FC<ErrorMessageProps> = ({ message }) => {
+  return (
+    <p className="error">
+      <span>💀</span> {message}
+    </p>
+  );
+};
+
+const Loader = () => {
+  return <p className="loader">Loading...</p>;
+};
